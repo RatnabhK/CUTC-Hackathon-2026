@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: benchpilot-api
+    runtime: python
+    repo: https://github.com/RatnabhK/CUTC-Hackathon-2026
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: backend
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  - type: web
+    name: benchpilot-web
+    runtime: static
+    repo: https://github.com/RatnabhK/CUTC-Hackathon-2026
+    branch: main
+    rootDir: frontend
+    autoDeploy: true
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE
+        value: https://benchpilot-api.onrender.com
