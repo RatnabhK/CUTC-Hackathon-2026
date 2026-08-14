@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Objective, Parameter, TrialOut } from "../types";
 
 interface Props {
@@ -87,18 +88,25 @@ export function TrialsPanel({ parameters, objective, trials, onAdd, busy }: Prop
                 </td>
               </tr>
             )}
-            {trials.map((t, i) => (
-              <tr key={t.id}>
-                <td>{i + 1}</td>
-                {parameters.map((p) => (
-                  <td key={p.name}>{t.params[p.name]?.toFixed(3)}</td>
-                ))}
-                <td className="mono">{t.objective_value.toFixed(3)}</td>
-                <td>
-                  <span className={`badge ${t.source}`}>{t.source}</span>
-                </td>
-              </tr>
-            ))}
+            <AnimatePresence initial={false}>
+              {trials.map((t, i) => (
+                <motion.tr
+                  key={t.id}
+                  initial={{ opacity: 0, backgroundColor: "rgba(94, 234, 212, 0.18)" }}
+                  animate={{ opacity: 1, backgroundColor: "rgba(94, 234, 212, 0)" }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                >
+                  <td>{i + 1}</td>
+                  {parameters.map((p) => (
+                    <td key={p.name}>{t.params[p.name]?.toFixed(3)}</td>
+                  ))}
+                  <td className="mono">{t.objective_value.toFixed(3)}</td>
+                  <td>
+                    <span className={`badge ${t.source}`}>{t.source}</span>
+                  </td>
+                </motion.tr>
+              ))}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>

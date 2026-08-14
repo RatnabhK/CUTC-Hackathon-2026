@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { api } from "./api";
 import { SetupForm } from "./components/SetupForm";
 import { TrialsPanel } from "./components/TrialsPanel";
@@ -8,6 +9,16 @@ import { CompareDemo } from "./components/CompareDemo";
 import type { Objective, Parameter, SessionOut } from "./types";
 
 type Tab = "optimize" | "demo";
+
+function BackgroundScene() {
+  return (
+    <div className="bg-scene" aria-hidden="true">
+      <div className="bg-blob b1" />
+      <div className="bg-blob b2" />
+      <div className="bg-blob b3" />
+    </div>
+  );
+}
 
 function App() {
   const [session, setSession] = useState<SessionOut | null>(null);
@@ -56,9 +67,18 @@ function App() {
 
   return (
     <div className="app">
+      <BackgroundScene />
+
       <header className="topbar">
         <div className="brand">
-          <span className="logo">◎</span> BenchPilot
+          <motion.span
+            className="logo"
+            animate={{ rotate: [0, 8, -8, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            ◎
+          </motion.span>
+          BenchPilot
         </div>
         <span className="tagline">Bayesian-optimal next experiment, every time.</span>
         {session && (
@@ -69,57 +89,99 @@ function App() {
       </header>
 
       <main>
-        {!session && <SetupForm onCreate={createSession} busy={busy} error={error} />}
+        <AnimatePresence mode="wait">
+          {!session && (
+            <motion.div
+              key="setup"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
+              <SetupForm onCreate={createSession} busy={busy} error={error} />
+            </motion.div>
+          )}
 
-        {session && (
-          <>
-            <div className="session-header">
-              <h1>{session.name}</h1>
-              <span className="muted">
-                {session.objective.goal} {session.objective.name}
-                {session.objective.unit ? ` (${session.objective.unit})` : ""} over{" "}
-                {session.parameters.map((p) => p.name).join(", ")}
-              </span>
-            </div>
-
-            <div className="tabs">
-              <button className={tab === "optimize" ? "tab active" : "tab"} onClick={() => setTab("optimize")}>
-                Optimize
-              </button>
-              <button className={tab === "demo" ? "tab active" : "tab"} onClick={() => setTab("demo")}>
-                Demo: BenchPilot vs. Random
-              </button>
-            </div>
-
-            {tab === "optimize" && (
-              <div className="grid">
-                <div className="col">
-                  <TrialsPanel
-                    parameters={session.parameters}
-                    objective={session.objective}
-                    trials={session.trials}
-                    onAdd={addHistoricalTrial}
-                    busy={busy}
-                  />
-                  <HistoryChart trials={session.trials} objective={session.objective} />
-                </div>
-                <div className="col">
-                  <SuggestionPanel
-                    sessionId={session.id}
-                    parameters={session.parameters}
-                    objective={session.objective}
-                    refreshKey={refreshKey}
-                    onResultSubmitted={refreshSession}
-                  />
-                </div>
+          {session && (
+            <motion.div
+              key="session"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
+              <div className="session-header">
+                <h1>{session.name}</h1>
+                <span className="muted">
+                  {session.objective.goal} {session.objective.name}
+                  {session.objective.unit ? ` (${session.objective.unit})` : ""} over{" "}
+                  {session.parameters.map((p) => p.name).join(", ")}
+                </span>
               </div>
-            )}
 
-            {tab === "demo" && (
-              <CompareDemo sessionId={session.id} objectiveName={session.objective.name} />
-            )}
-          </>
-        )}
+              <div className="tabs">
+                <button
+                  className={tab === "optimize" ? "tab active" : "tab"}
+                  onClick={() => setTab("optimize")}
+                >
+                  {tab === "optimize" && (
+                    <motion.span className="tab-indicator" layoutId="tab-indicator" />
+                  )}
+                  <span style={{ position: "relative" }}>Optimize</span>
+                </button>
+                <button className={tab === "demo" ? "tab active" : "tab"} onClick={() => setTab("demo")}>
+                  {tab === "demo" && <motion.span className="tab-indicator" layoutId="tab-indicator" />}
+                  <span style={{ position: "relative" }}>Demo: BenchPilot vs. Random</span>
+                </button>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {tab === "optimize" && (
+                  <motion.div
+                    key="optimize"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="grid"
+                  >
+                    <div className="col">
+                      <TrialsPanel
+                        parameters={session.parameters}
+                        objective={session.objective}
+                        trials={session.trials}
+                        onAdd={addHistoricalTrial}
+                        busy={busy}
+                      />
+                      <HistoryChart trials={session.trials} objective={session.objective} />
+                    </div>
+                    <div className="col">
+                      <SuggestionPanel
+                        sessionId={session.id}
+                        parameters={session.parameters}
+                        objective={session.objective}
+                        refreshKey={refreshKey}
+                        onResultSubmitted={refreshSession}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {tab === "demo" && (
+                  <motion.div
+                    key="demo"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                  >
+                    <CompareDemo sessionId={session.id} objectiveName={session.objective.name} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

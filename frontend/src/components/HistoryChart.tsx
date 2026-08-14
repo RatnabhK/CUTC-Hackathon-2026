@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
   CartesianGrid,
   Line,
@@ -16,6 +17,14 @@ interface Props {
   trials: TrialOut[];
   objective: Objective;
 }
+
+const tooltipStyle = {
+  background: "var(--panel-solid)",
+  border: "1px solid var(--border)",
+  borderRadius: 10,
+  boxShadow: "0 12px 30px -14px rgba(0,0,0,0.7)",
+  fontSize: 12,
+};
 
 export function HistoryChart({ trials, objective }: Props) {
   const data = trials.map((t, i) => ({
@@ -37,11 +46,16 @@ export function HistoryChart({ trials, objective }: Props) {
   }
 
   return (
-    <div className="card">
+    <motion.div
+      className="card"
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <h3>Progress</h3>
       <ResponsiveContainer width="100%" height={240}>
         <ScatterChart margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
-          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+          <CartesianGrid stroke="var(--border-soft)" strokeDasharray="3 3" />
           <XAxis
             type="number"
             dataKey="trial"
@@ -57,24 +71,21 @@ export function HistoryChart({ trials, objective }: Props) {
             stroke="var(--muted)"
             tick={{ fill: "var(--muted)", fontSize: 12 }}
           />
-          <ZAxis range={[60, 60]} />
-          <Tooltip
-            cursor={{ strokeDasharray: "3 3" }}
-            contentStyle={{ background: "var(--panel)", border: "1px solid var(--border)" }}
-          />
-          <Scatter name="historical" data={historical} fill="var(--accent-2)" />
-          <Scatter name="suggested" data={suggested} fill="var(--accent)" />
+          <ZAxis range={[70, 70]} />
+          <Tooltip cursor={{ strokeDasharray: "3 3" }} contentStyle={tooltipStyle} />
+          <Scatter name="historical" data={historical} fill="var(--accent-2)" isAnimationActive />
+          <Scatter name="suggested" data={suggested} fill="var(--accent)" isAnimationActive />
         </ScatterChart>
       </ResponsiveContainer>
       <div className="legend">
         <span>
-          <i className="dot" style={{ background: "var(--accent-2)" }} /> historical
+          <i className="dot" style={{ background: "var(--accent-2)", color: "var(--accent-2)" }} /> historical
         </span>
         <span>
-          <i className="dot" style={{ background: "var(--accent)" }} /> BenchPilot-suggested
+          <i className="dot" style={{ background: "var(--accent)", color: "var(--accent)" }} /> BenchPilot-suggested
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -91,11 +102,18 @@ export function BestSoFarLine({ trials, objective }: Props) {
   return (
     <ResponsiveContainer width="100%" height={140}>
       <LineChart data={data} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+        <CartesianGrid stroke="var(--border-soft)" strokeDasharray="3 3" />
         <XAxis dataKey="trial" allowDecimals={false} stroke="var(--muted)" tick={{ fontSize: 12 }} />
         <YAxis stroke="var(--muted)" tick={{ fontSize: 12 }} />
-        <Tooltip contentStyle={{ background: "var(--panel)", border: "1px solid var(--border)" }} />
-        <Line type="stepAfter" dataKey="best" stroke="var(--accent)" dot={false} strokeWidth={2} />
+        <Tooltip contentStyle={tooltipStyle} />
+        <Line
+          type="stepAfter"
+          dataKey="best"
+          stroke="var(--accent)"
+          dot={false}
+          activeDot={{ r: 5 }}
+          strokeWidth={2}
+        />
       </LineChart>
     </ResponsiveContainer>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Objective, Parameter } from "../types";
 
 interface Props {
@@ -7,31 +8,37 @@ interface Props {
   error: string | null;
 }
 
-const EXAMPLE_PARAMS: Parameter[] = [
-  { name: "temperature", min: 20, max: 80, unit: "C" },
-  { name: "concentration", min: 0.1, max: 2.0, unit: "M" },
+interface ParamRow extends Parameter {
+  _id: string;
+}
+
+const makeId = () => Math.random().toString(36).slice(2);
+
+const EXAMPLE_PARAMS: ParamRow[] = [
+  { _id: makeId(), name: "temperature", min: 20, max: 80, unit: "C" },
+  { _id: makeId(), name: "concentration", min: 0.1, max: 2.0, unit: "M" },
 ];
 
 export function SetupForm({ onCreate, busy, error }: Props) {
   const [name, setName] = useState("Reaction Yield Optimization");
-  const [parameters, setParameters] = useState<Parameter[]>(EXAMPLE_PARAMS);
+  const [parameters, setParameters] = useState<ParamRow[]>(EXAMPLE_PARAMS);
   const [objectiveName, setObjectiveName] = useState("yield");
   const [goal, setGoal] = useState<"maximize" | "minimize">("maximize");
   const [objectiveUnit, setObjectiveUnit] = useState("%");
 
-  const updateParam = (idx: number, patch: Partial<Parameter>) => {
-    setParameters((ps) => ps.map((p, i) => (i === idx ? { ...p, ...patch } : p)));
+  const updateParam = (id: string, patch: Partial<Parameter>) => {
+    setParameters((ps) => ps.map((p) => (p._id === id ? { ...p, ...patch } : p)));
   };
 
   const addParam = () =>
-    setParameters((ps) => [...ps, { name: `param_${ps.length + 1}`, min: 0, max: 1 }]);
+    setParameters((ps) => [...ps, { _id: makeId(), name: `param_${ps.length + 1}`, min: 0, max: 1 }]);
 
-  const removeParam = (idx: number) =>
-    setParameters((ps) => ps.filter((_, i) => i !== idx));
+  const removeParam = (id: string) => setParameters((ps) => ps.filter((p) => p._id !== id));
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCreate(name, parameters, { name: objectiveName, goal, unit: objectiveUnit || undefined });
+    const clean: Parameter[] = parameters.map(({ _id, ...p }) => p);
+    onCreate(name, clean, { name: objectiveName, goal, unit: objectiveUnit || undefined });
   };
 
   return (
@@ -54,43 +61,52 @@ export function SetupForm({ onCreate, busy, error }: Props) {
               + add parameter
             </button>
           </div>
-          {parameters.map((p, i) => (
-            <div className="param-row" key={i}>
-              <input
-                className="param-name"
-                value={p.name}
-                onChange={(e) => updateParam(i, { name: e.target.value })}
-                placeholder="name"
-                required
-              />
-              <input
-                type="number"
-                value={p.min}
-                onChange={(e) => updateParam(i, { min: Number(e.target.value) })}
-                placeholder="min"
-                required
-              />
-              <span className="tilde">to</span>
-              <input
-                type="number"
-                value={p.max}
-                onChange={(e) => updateParam(i, { max: Number(e.target.value) })}
-                placeholder="max"
-                required
-              />
-              <input
-                className="param-unit"
-                value={p.unit ?? ""}
-                onChange={(e) => updateParam(i, { unit: e.target.value })}
-                placeholder="unit"
-              />
-              {parameters.length > 1 && (
-                <button type="button" className="icon-btn" onClick={() => removeParam(i)}>
-                  ×
-                </button>
-              )}
-            </div>
-          ))}
+          <AnimatePresence initial={false}>
+            {parameters.map((p) => (
+              <motion.div
+                className="param-row"
+                key={p._id}
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <input
+                  className="param-name"
+                  value={p.name}
+                  onChange={(e) => updateParam(p._id, { name: e.target.value })}
+                  placeholder="name"
+                  required
+                />
+                <input
+                  type="number"
+                  value={p.min}
+                  onChange={(e) => updateParam(p._id, { min: Number(e.target.value) })}
+                  placeholder="min"
+                  required
+                />
+                <span className="tilde">to</span>
+                <input
+                  type="number"
+                  value={p.max}
+                  onChange={(e) => updateParam(p._id, { max: Number(e.target.value) })}
+                  placeholder="max"
+                  required
+                />
+                <input
+                  className="param-unit"
+                  value={p.unit ?? ""}
+                  onChange={(e) => updateParam(p._id, { unit: e.target.value })}
+                  placeholder="unit"
+                />
+                {parameters.length > 1 && (
+                  <button type="button" className="icon-btn" onClick={() => removeParam(p._id)}>
+                    ×
+                  </button>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
 
         <div className="field-group">
@@ -118,9 +134,15 @@ export function SetupForm({ onCreate, busy, error }: Props) {
 
         {error && <p className="error">{error}</p>}
 
-        <button type="submit" className="primary-btn" disabled={busy}>
+        <motion.button
+          type="submit"
+          className="primary-btn"
+          disabled={busy}
+          whileHover={{ scale: busy ? 1 : 1.02 }}
+          whileTap={{ scale: busy ? 1 : 0.98 }}
+        >
           {busy ? "Creating…" : "Create session"}
-        </button>
+        </motion.button>
       </form>
     </div>
   );
