@@ -25,6 +25,7 @@ export function SetupForm({ onCreate, busy, error }: Props) {
   const [objectiveName, setObjectiveName] = useState("yield");
   const [goal, setGoal] = useState<"maximize" | "minimize">("maximize");
   const [objectiveUnit, setObjectiveUnit] = useState("%");
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const updateParam = (id: string, patch: Partial<Parameter>) => {
     setParameters((ps) => ps.map((p) => (p._id === id ? { ...p, ...patch } : p)));
@@ -35,10 +36,43 @@ export function SetupForm({ onCreate, busy, error }: Props) {
 
   const removeParam = (id: string) => setParameters((ps) => ps.filter((p) => p._id !== id));
 
+  /** Mirrors the API's own rules so problems surface next to the field that
+   * caused them instead of as a failed request after submitting. */
+  const validate = (): string | null => {
+    const names = parameters.map((p) => p.name.trim());
+
+    if (names.some((n) => !n)) return "Every parameter needs a name.";
+
+    const dupes = [...new Set(names.filter((n, i) => names.indexOf(n) !== i))];
+    if (dupes.length) return `Duplicate parameter names: ${dupes.join(", ")}.`;
+
+    const badRange = parameters.find((p) => !(p.min < p.max));
+    if (badRange) {
+      return `"${badRange.name}": min (${badRange.min}) must be less than max (${badRange.max}).`;
+    }
+
+    const nonFinite = parameters.find((p) => !Number.isFinite(p.min) || !Number.isFinite(p.max));
+    if (nonFinite) return `"${nonFinite.name}": bounds must be real numbers.`;
+
+    if (!objectiveName.trim()) return "The objective needs a name.";
+    if (names.includes(objectiveName.trim())) {
+      return `"${objectiveName.trim()}" is already a parameter name — give the objective a different name.`;
+    }
+    return null;
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const clean: Parameter[] = parameters.map(({ _id, ...p }) => p);
-    onCreate(name, clean, { name: objectiveName, goal, unit: objectiveUnit || undefined });
+    const problem = validate();
+    setLocalError(problem);
+    if (problem) return;
+
+    const clean: Parameter[] = parameters.map(({ _id, ...p }) => ({ ...p, name: p.name.trim() }));
+    onCreate(name, clean, {
+      name: objectiveName.trim(),
+      goal,
+      unit: objectiveUnit || undefined,
+    });
   };
 
   return (
@@ -132,7 +166,7 @@ export function SetupForm({ onCreate, busy, error }: Props) {
           </div>
         </div>
 
-        {error && <p className="error">{error}</p>}
+        {(localError || error) && <p className="error">{localError ?? error}</p>}
 
         <motion.button
           type="submit"

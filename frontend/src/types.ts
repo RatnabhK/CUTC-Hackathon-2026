@@ -44,7 +44,11 @@ export interface ExplainResponse {
 export interface CompareTrace {
   trial: number;
   bayesopt_best: number;
+  bayesopt_lo: number;
+  bayesopt_hi: number;
   random_best: number;
+  random_lo: number;
+  random_hi: number;
 }
 
 export interface CompareResponse {
@@ -52,4 +56,9 @@ export interface CompareResponse {
   bayesopt_final: number;
   random_final: number;
   true_optimum: number;
+  bayesopt_gap: number;
+  random_gap: number;
+  n_replicates: number;
+  bayesopt_win_rate: number;
+  trials_to_match: number | null;
 }

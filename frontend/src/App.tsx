@@ -80,7 +80,7 @@ function App() {
           </motion.span>
           BenchPilot
         </div>
-        <span className="tagline">Bayesian-optimal next experiment, every time.</span>
+        <span className="tagline">Spend your next experiment where it counts.</span>
         {session && (
           <button className="ghost-btn" onClick={() => setSession(null)}>
             new session

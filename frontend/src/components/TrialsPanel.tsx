@@ -13,12 +13,36 @@ interface Props {
 export function TrialsPanel({ parameters, objective, trials, onAdd, busy }: Props) {
   const emptyParams = Object.fromEntries(parameters.map((p) => [p.name, (p.min + p.max) / 2]));
   const [params, setParams] = useState<Record<string, number>>(emptyParams);
-  const [value, setValue] = useState<number>(0);
+  const [value, setValue] = useState("");
   const [note, setNote] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  /** A trial outside the declared bounds would be fit by the GP but could never
+   * be proposed back, since the acquisition search is clamped to the box. */
+  const outOfRange = parameters.filter((p) => {
+    const v = params[p.name];
+    return !Number.isFinite(v) || v < p.min || v > p.max;
+  });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onAdd(params, value, note || undefined);
+
+    if (outOfRange.length) {
+      const p = outOfRange[0];
+      setLocalError(
+        `"${p.name}" must be between ${p.min} and ${p.max}${p.unit ? ` ${p.unit}` : ""}.`
+      );
+      return;
+    }
+    const measured = Number(value);
+    if (value.trim() === "" || !Number.isFinite(measured)) {
+      setLocalError(`Enter the ${objective.name} recorded for this trial.`);
+      return;
+    }
+
+    setLocalError(null);
+    await onAdd(params, measured, note || undefined);
+    setValue("");
     setNote("");
   };
 
@@ -31,22 +55,29 @@ export function TrialsPanel({ parameters, objective, trials, onAdd, busy }: Prop
       </p>
 
       <form onSubmit={submit} className="trial-form">
-        {parameters.map((p) => (
-          <label className="field small-field" key={p.name}>
-            <span>
-              {p.name} {p.unit && <em>({p.unit})</em>}
-            </span>
-            <input
-              type="number"
-              step="any"
-              value={params[p.name]}
-              min={p.min}
-              max={p.max}
-              onChange={(e) => setParams((prev) => ({ ...prev, [p.name]: Number(e.target.value) }))}
-              required
-            />
-          </label>
-        ))}
+        {parameters.map((p) => {
+          const bad = outOfRange.some((o) => o.name === p.name);
+          return (
+            <label className="field small-field" key={p.name}>
+              <span>
+                {p.name} {p.unit && <em>({p.unit})</em>}
+              </span>
+              <input
+                type="number"
+                step="any"
+                value={params[p.name]}
+                min={p.min}
+                max={p.max}
+                title={`allowed range: ${p.min} to ${p.max}`}
+                style={bad ? { borderColor: "var(--error)" } : undefined}
+                onChange={(e) =>
+                  setParams((prev) => ({ ...prev, [p.name]: Number(e.target.value) }))
+                }
+                required
+              />
+            </label>
+          );
+        })}
         <label className="field small-field">
           <span>
             {objective.name} {objective.unit && <em>({objective.unit})</em>}
@@ -55,7 +86,8 @@ export function TrialsPanel({ parameters, objective, trials, onAdd, busy }: Prop
             type="number"
             step="any"
             value={value}
-            onChange={(e) => setValue(Number(e.target.value))}
+            placeholder="measured"
+            onChange={(e) => setValue(e.target.value)}
             required
           />
         </label>
@@ -67,6 +99,8 @@ export function TrialsPanel({ parameters, objective, trials, onAdd, busy }: Prop
           + add trial
         </button>
       </form>
+
+      {localError && <p className="error">{localError}</p>}
 
       <div className="table-wrap">
         <table>

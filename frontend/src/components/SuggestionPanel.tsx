@@ -19,7 +19,10 @@ export function SuggestionPanel({ sessionId, parameters, objective, refreshKey, 
   const [loading, setLoading] = useState(false);
   const [explanation, setExplanation] = useState<{ text: string; source: string } | null>(null);
   const [explaining, setExplaining] = useState(false);
-  const [resultValue, setResultValue] = useState<number>(0);
+  // Deliberately blank, never seeded from predicted_objective: prefilling the
+  // prediction here makes it far too easy to submit the model's own guess back
+  // as if it were a measurement, which would train the GP on its own output.
+  const [resultValue, setResultValue] = useState("");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export function SuggestionPanel({ sessionId, parameters, objective, refreshKey, 
     try {
       const s = await api.suggest(sessionId);
       setSuggestion(s);
-      setResultValue(s.predicted_objective ?? 0);
+      setResultValue("");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -60,11 +63,17 @@ export function SuggestionPanel({ sessionId, parameters, objective, refreshKey, 
   const submitResult = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!suggestion) return;
+    const measured = Number(resultValue);
+    if (resultValue.trim() === "" || !Number.isFinite(measured)) {
+      setError(`Enter the ${objective.name} you actually measured.`);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      await api.submitResult(sessionId, suggestion.params, resultValue, note || undefined);
+      await api.submitResult(sessionId, suggestion.params, measured, note || undefined);
       setNote("");
+      setResultValue("");
       await onResultSubmitted();
     } catch (e) {
       setError((e as Error).message);
@@ -183,13 +192,14 @@ export function SuggestionPanel({ sessionId, parameters, objective, refreshKey, 
               <h4>Log actual result</h4>
               <label className="field small-field">
                 <span>
-                  actual {objective.name} {objective.unit && <em>({objective.unit})</em>}
+                  measured {objective.name} {objective.unit && <em>({objective.unit})</em>}
                 </span>
                 <input
                   type="number"
                   step="any"
                   value={resultValue}
-                  onChange={(e) => setResultValue(Number(e.target.value))}
+                  placeholder="run it first"
+                  onChange={(e) => setResultValue(e.target.value)}
                   required
                 />
               </label>
@@ -201,6 +211,10 @@ export function SuggestionPanel({ sessionId, parameters, objective, refreshKey, 
                 {submitting ? <Spinner size={12} dark /> : null}
                 {submitting ? "saving…" : "submit & get next recommendation"}
               </button>
+              <p className="muted tiny" style={{ margin: "2px 0 0", flexBasis: "100%" }}>
+                Run the experiment above, then enter what you actually measured — not the
+                prediction.
+              </p>
             </form>
           </motion.div>
         )}
