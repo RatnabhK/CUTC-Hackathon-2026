@@ -30,21 +30,20 @@ const tooltipStyle = {
   fontSize: 12,
 };
 
-export function CompareDemo({ sessionId, objectiveName, objectiveGoal}: Props) {
+export function CompareDemo({ sessionId, objectiveName, objectiveGoal }: Props) {
   const [nTrials, setNTrials] = useState(18);
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [result, setResult] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null)
-  ;
+  const [error, setError] = useState<string | null>(null);
 
   const gapFromOptimum = (value: number, optimum: number) => {
-  if (objectiveGoal === "maximize") {
-    return optimum - value;
-  }
+    if (objectiveGoal === "maximize") {
+      return optimum - value;
+    }
 
-  return value - optimum;
-};
+    return value - optimum;
+  };
 
   const run = async () => {
     setLoading(true);
