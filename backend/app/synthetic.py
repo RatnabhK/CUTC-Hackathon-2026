@@ -31,11 +31,8 @@ class SyntheticLandscape:
         bump = self.heights * np.exp(-d2 / (2 * self.widths**2))
         return float(np.max(bump))
 
-    def true_optimum01(self, n_grid: int = 20000, seed: int = 0) -> float:
-        rng = np.random.default_rng(seed)
-        samples = rng.uniform(size=(n_grid, self.dim))
-        vals = [self.eval01(s) for s in samples]
-        return float(np.max(vals))
+    def true_optimum01(self) -> float:
+        return float(np.max(self.heights))
 
 
 def _make_trial(parameters: list[Parameter], x01: np.ndarray, value: float, idx: int) -> TrialOut:
@@ -103,7 +100,7 @@ def run_comparison(
             )
         )
 
-    true_opt01 = landscape.true_optimum01(seed=seed)
+    true_opt01 = landscape.true_optimum01()
     true_optimum = scale(true_opt01)
 
     return CompareResponse(

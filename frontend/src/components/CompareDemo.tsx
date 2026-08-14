@@ -19,6 +19,7 @@ import type { CompareResponse } from "../types";
 interface Props {
   sessionId: string;
   objectiveName: string;
+  objectiveGoal: "maximize" | "minimize";
 }
 
 const tooltipStyle = {
@@ -29,12 +30,21 @@ const tooltipStyle = {
   fontSize: 12,
 };
 
-export function CompareDemo({ sessionId, objectiveName }: Props) {
+export function CompareDemo({ sessionId, objectiveName, objectiveGoal}: Props) {
   const [nTrials, setNTrials] = useState(18);
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [result, setResult] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null)
+  ;
+
+  const gapFromOptimum = (value: number, optimum: number) => {
+  if (objectiveGoal === "maximize") {
+    return optimum - value;
+  }
+
+  return value - optimum;
+};
 
   const run = async () => {
     setLoading(true);
@@ -175,8 +185,8 @@ export function CompareDemo({ sessionId, objectiveName }: Props) {
               <div className="stat">
                 <span className="stat-label">gap vs. true optimum ({objectiveName})</span>
                 <span className="stat-value mono">
-                  <AnimatedNumber value={result.true_optimum - result.bayesopt_final} decimals={2} /> vs.{" "}
-                  <AnimatedNumber value={result.true_optimum - result.random_final} decimals={2} />
+                  <AnimatedNumber value={gapFromOptimum(result.bayesopt_final, result.true_optimum)} decimals={2} /> vs.{" "}
+                  <AnimatedNumber value={gapFromOptimum(result.random_final, result.true_optimum)} decimals={2} />
                 </span>
               </div>
             </div>
