@@ -175,7 +175,7 @@ function App() {
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
                   >
-                   <CompareDemo sessionId={session.id} objectiveName={session.objective.name} objectiveGoal={session.objective.goal}/>
+                    <CompareDemo sessionId={session.id} objectiveName={session.objective.name} />
                   </motion.div>
                 )}
               </AnimatePresence>
