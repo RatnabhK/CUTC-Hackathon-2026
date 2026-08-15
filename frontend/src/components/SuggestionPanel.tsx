@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "../api";
 import { AnimatedNumber } from "./AnimatedNumber";
-import { ConfidenceBar } from "./ConfidenceBar";
 import { Spinner } from "./Spinner";
 import type { Objective, Parameter, Suggestion } from "../types";
 
@@ -131,10 +130,7 @@ export function SuggestionPanel({ sessionId, parameters, objective, refreshKey, 
               </p>
             ) : (
               <>
-                <ConfidenceBar
-                  predicted={suggestion.predicted_objective ?? 0}
-                  uncertainty={suggestion.uncertainty ?? 0}
-                />
+                
                 <div className="prediction-row">
                   <div className="stat">
                     <span className="stat-label">
