@@ -208,7 +208,7 @@ export function SuggestionPanel({ sessionId, parameters, objective, refreshKey, 
                 {submitting ? "saving…" : "submit & get next recommendation"}
               </button>
               <p className="muted tiny" style={{ margin: "2px 0 0", flexBasis: "100%" }}>
-                Run the experiment above, then enter what you actually measured — not the
+                Run the experiment above, then enter what you actually measured - not the
                 prediction.
               </p>
             </form>
