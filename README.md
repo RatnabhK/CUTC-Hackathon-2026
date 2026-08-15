@@ -3,7 +3,7 @@
 **BenchPilot helps researchers decide which experiment to run next when time, money, or materials
 are limited.**
 
-Built for HackCanada 2026, Apps track.
+Built for the CUTC: Transform Hackathon 2026, Apps track.
 
 ## The problem
 

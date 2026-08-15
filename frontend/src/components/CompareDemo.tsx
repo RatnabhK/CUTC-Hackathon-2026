@@ -33,7 +33,7 @@ const tooltipStyle = {
 export function CompareDemo({ sessionId, objectiveName }: Props) {
   const [nTrials, setNTrials] = useState(18);
   const [nReplicates, setNReplicates] = useState(8);
-  const [seed, setSeed] = useState<number | undefined>(undefined);
+  const [seed, setSeed] = useState<number | undefined>(7);
   const [result, setResult] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,11 +96,11 @@ export function CompareDemo({ sessionId, objectiveName }: Props) {
           />
         </label>
         <label className="field small-field">
-          <span>seed (optional)</span>
+          <span>landscape seed</span>
           <input
             type="number"
             value={seed ?? ""}
-            placeholder="random"
+            placeholder="default: 7"
             onChange={(e) => setSeed(e.target.value === "" ? undefined : Number(e.target.value))}
           />
         </label>
